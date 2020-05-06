@@ -21,18 +21,28 @@ void MySimulator::hardwareLoop() {
     this->stepY = false;
 
     // Increment clock, timers
-    clk++;
+    std::int64_t xMaxJump = this->timx.t() - this->timXCount - 1;
+    std::int64_t yMaxJump = this->timy.t() - this->timYCount - 1;
+
+    std::int64_t jump = 1;
+    if(this->timx.running() && this->timy.running()) {
+        jump = std::min(xMaxJump, yMaxJump);
+    }else if (this->timx.running()) {
+        jump = xMaxJump;
+    }else if (this->timy.running()) {
+        jump = yMaxJump;
+    }
+    
+    if(jump < 1) { // just a bit of safety
+        jump = 1;
+    }
+        
+    clk += jump;
     if(this->timx.running()) {
-        if(this->timx.t() == 0) {
-            std::cout << "timx.t(): " << 0 << "\n"; // TODO
-        }
-        this->timXCount = (this->timXCount + 1) % this->timx.t();
+        this->timXCount = (this->timXCount + jump) % this->timx.t();
     }
     if(this->timy.running()) {
-        if(this->timy.t() == 0) {
-            std::cout << "timy.t(): " << 0 << "\n";
-        }
-        this->timYCount = (this->timYCount + 1) % this->timy.t();
+        this->timYCount = (this->timYCount + jump) % this->timy.t();
     }
 }
 
