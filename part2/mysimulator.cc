@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include "mysimulator.hh"
-#include "ri.hh"
 
 namespace brown {
 

@@ -1,3 +1,5 @@
+**/node_modules/**/*
+
 # C++
 # Prerequisites
 *.d
