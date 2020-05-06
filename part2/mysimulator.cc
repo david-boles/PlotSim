@@ -16,9 +16,11 @@ void MySimulator::hardwareLoop() {
     }
 
     // Output pulses if applicable
-    setpin(clk, this->stepX, this->stepY, this->dirX, this->dirY, this->penDown);
-    this->stepX = false;
-    this->stepY = false;
+    if(this->stepX || this->stepY) {
+        setpin(clk, this->stepX, this->stepY, this->dirX, this->dirY, this->penDown);
+        this->stepX = false;
+        this->stepY = false;
+    }
 
     // Increment clock, timers
     std::int64_t xMaxJump = this->timx.t() - this->timXCount - 1;
