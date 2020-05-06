@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "dxf-parser": "^1.0.0-alpha.2"
+    "dxf": "^4.4.0"
   }
 }
