@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <thread>
+#include <functional>
 
 #include "app.hh"
 #include "timer.hh"
@@ -63,22 +64,24 @@ move dependent on whatever curve is given above.
 */
 
 // Calculate the time it takes to cover a portion of a total distance when accelerating from and then back to the minimum speed
-double TIME_TO_POSITION_IN_MOVE(double targetDistance_pulses, double totalDistance_pulses) {
+std::function<double_t (double_t)> PLAN_MOVE(double totalDistance_pulses) {
   // Given the length of the move (and the curve) determine what to do at which points.
   double_t accel_dist = std::min(totalDistance_pulses/2, DISTANCE_TO_FULLY_ACCELERATE);
   double_t const_vel_dist = std::max(0.0, totalDistance_pulses - (2 * accel_dist));
+  double_t accel_time = TIME_TO_ACCELERATE_OVER_DISTANCE(accel_dist);
+  double_t const_vel_time = const_vel_dist / MAX_PULSES_PER_TICK;
 
-  if(targetDistance_pulses < accel_dist) { // Acceleration
-    return TIME_TO_ACCELERATE_OVER_DISTANCE(targetDistance_pulses);
-  }else {
-    double_t accel_time = TIME_TO_ACCELERATE_OVER_DISTANCE(accel_dist);
-    if(targetDistance_pulses < (accel_dist + const_vel_dist)) { // Constant velocity
-      return accel_time + ((targetDistance_pulses - accel_dist) / MAX_PULSES_PER_TICK);
-    }else { // Deceleration
-      double_t const_vel_time = const_vel_dist / MAX_PULSES_PER_TICK;
-      return accel_time + const_vel_time + (accel_time - TIME_TO_ACCELERATE_OVER_DISTANCE(totalDistance_pulses - targetDistance_pulses));
+  return [totalDistance_pulses, accel_dist, const_vel_dist, accel_time, const_vel_time](double targetDistance_pulses) {
+    if(targetDistance_pulses < accel_dist) { // Acceleration
+        return TIME_TO_ACCELERATE_OVER_DISTANCE(targetDistance_pulses);
+    }else {
+        if(targetDistance_pulses < (accel_dist + const_vel_dist)) { // Constant velocity
+            return accel_time + ((targetDistance_pulses - accel_dist) / MAX_PULSES_PER_TICK);
+        }else { // Deceleration
+            return accel_time + const_vel_time + (accel_time - TIME_TO_ACCELERATE_OVER_DISTANCE(totalDistance_pulses - targetDistance_pulses));
+        }
     }
-  }
+  };
 }
 
 
@@ -96,6 +99,8 @@ int64_t targetX = 0; // Target position
 int64_t targetY = 0;
 int64_t absTotalDeltaX = 0; // The distances being moved
 int64_t absTotalDeltaY = 0;
+std::function<double_t (double_t)> majorXPlan = [](double_t d){return d;}; // The plan lambdas for timing out movements
+std::function<double_t (double_t)> majorYPlan = [](double_t d){return d;};
 bool dirX = false; // The directions being moved
 bool dirY = false;
 bool penDown = false; // Whether the pen is down or up
@@ -119,12 +124,12 @@ static void updateTimerX(brown::MySimulator &mysim) {
     
     // Update timeout till next step
     if(absTotalDeltaX >= absTotalDeltaY) { // X is major axis
-        safelySetTimerPeriod(mysim.timx, TIME_TO_POSITION_IN_MOVE(absCurrDeltaX + 1, absTotalDeltaX) - currDeltaCLK);
+        safelySetTimerPeriod(mysim.timx, majorXPlan(absCurrDeltaX + 1) - currDeltaCLK);
     }else {// Y is major axis
         if(absTotalDeltaX != 0) { // If it has to move at all. If not, and the timer keeps running, it'll turn itself off next update.
             // std::cout << "absTotalDeltaX: " << absTotalDeltaX << "\n"; TODO
             double_t scaleFactor = (absTotalDeltaY * 1.0) / absTotalDeltaX;
-            safelySetTimerPeriod(mysim.timx, TIME_TO_POSITION_IN_MOVE(scaleFactor * (absCurrDeltaX + 1), absTotalDeltaY) - currDeltaCLK);
+            safelySetTimerPeriod(mysim.timx, majorYPlan(scaleFactor * (absCurrDeltaX + 1)) - currDeltaCLK);
         }
     }
 
@@ -147,10 +152,10 @@ static void updateTimerY(brown::MySimulator &mysim) {
         if(absTotalDeltaY != 0) { // If it has to move at all. If not, and the timer keeps running, it'll turn itself off next update.
             // std::cout << "absTotalDeltaY: " << absTotalDeltaY << "\n"; TODO
             double_t scaleFactor = (absTotalDeltaX * 1.0) / absTotalDeltaY;
-            safelySetTimerPeriod(mysim.timy, TIME_TO_POSITION_IN_MOVE(scaleFactor * (absCurrDeltaY + 1), absTotalDeltaX) - currDeltaCLK);
+            safelySetTimerPeriod(mysim.timy, majorXPlan(scaleFactor * (absCurrDeltaY + 1)) - currDeltaCLK);
         }
     }else {// Y is major axis
-        safelySetTimerPeriod(mysim.timy, TIME_TO_POSITION_IN_MOVE(absCurrDeltaY + 1, absTotalDeltaY) - currDeltaCLK);
+        safelySetTimerPeriod(mysim.timy, majorYPlan(absCurrDeltaY + 1) - currDeltaCLK);
     }
 
     // The periods are from now, must reset any accumulated count on the timers
@@ -175,6 +180,8 @@ static void userLoop(brown::Simulator& sim) {
         targetY = state[nextMoveIdx][2] * PULSES_PER_CM * 0.01;
         absTotalDeltaX = std::abs(targetX - startX);
         absTotalDeltaY = std::abs(targetY - startY);
+        majorXPlan = PLAN_MOVE(absTotalDeltaX);
+        majorYPlan = PLAN_MOVE(absTotalDeltaY);
         dirX = targetX > startX;
         dirY = targetY > startY;
         penDown = state[nextMoveIdx][0];
