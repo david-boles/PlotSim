@@ -178,10 +178,4 @@ void MySimulator::hardwareLoop() {
   }
 }
 
-// Returns the desired position (steps) and pen down state.
-std::tuple<double_t, double_t, bool> MySimulator::softwareLoop() {
-  printf("@ %d (%d, %d)", clk, actualX, actualY);
-  return std::make_tuple(20000, 10000, true);
-}
-
 } // namespace brown
