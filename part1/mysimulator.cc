@@ -17,12 +17,11 @@
 #define MIN_PULSES_PER_SECOND 900.0//1000.0
 #define MAX_PULSES_PER_SECOND 9000.0//10000.0
 #define ACCELERATION_TIME_SECS 0.2//0.150
-// #define SAFETY_FACTOR 0.1
 
 double_t PULSES_PER_CM = (PULSES_PER_REV / CM_PER_REV);
-double_t MIN_PULSES_PER_TICK = /*(1 - SAFETY_FACTOR) * */(MIN_PULSES_PER_SECOND / CLOCK_FREQ_HZ);
-double_t MAX_PULSES_PER_TICK = /*(1 - SAFETY_FACTOR) * */(MAX_PULSES_PER_SECOND / CLOCK_FREQ_HZ);
-double_t ACCELERATION_TIME_TICKS = /*(1 + SAFETY_FACTOR) * */(ACCELERATION_TIME_SECS * CLOCK_FREQ_HZ);
+double_t MIN_PULSES_PER_TICK = (MIN_PULSES_PER_SECOND / CLOCK_FREQ_HZ);
+double_t MAX_PULSES_PER_TICK = (MAX_PULSES_PER_SECOND / CLOCK_FREQ_HZ);
+double_t ACCELERATION_TIME_TICKS = (ACCELERATION_TIME_SECS * CLOCK_FREQ_HZ);
 
 
 
@@ -165,11 +164,16 @@ void MySimulator::hardwareLoop() {
     startingUp = false;
   }
   
+  // Increment clock, timers
+  std::int64_t jump = std::min(timerX, timerY);
+  
+  if(jump < 1) { // just a bit of safety
+      jump = 1;
+  }
 
-  // Increment time
-  clk++;
-  timerX--;
-  timerY--;
+  clk += jump;
+  timerX -= jump;
+  timerY -= jump;
   if(timerX < 0) {
     timerX = 0;
   }

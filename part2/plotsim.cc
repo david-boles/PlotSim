@@ -15,7 +15,7 @@
 // Qs
 // Not using prescaler
 // flags
-// redoing part1
+// redoing part1 - fix clock slowness
 // tuning of safety factor/ safety for their tests
 // flat top
 
