@@ -105,24 +105,28 @@ void Simulator::setpin(std::int64_t clk, bool pulx, bool puly,
 
         // Fault 2/3: zero clk between pulses
         if (t0 <= 0) {
+            std::cout << "zero clk between pulses\n";
             if (!fault) {fault = i+2; faultclk = clk;}
             killax[i] = 1; continue;
         }
 
         // Fault 4/5: change direction at high speed
         if (((t0 < MAXT) || (t1 < MAXT)) && (ooclk[i] >= 0) && (dir[i] != odir[i])) {
+            std::cout << "dir change at high speed\n";
             if (!fault) {fault = i+4; faultclk = clk; }
             killax[i] = 1;
         }
 
         // Fault 6/7: speeding
         if ((t0 < MINT) && (oclk[i] >= 0)) {
+            std::cout << "speeding\n";
             if (!fault) {fault = i+6; faultclk = clk;}
         }
 
         // Fault 8/9: over-acceleration
         if ((t0 <= MAXT) && (t1 <= MAXT) && (ooclk[i] >= 0)) {
             if (fabs((double)(t1-t0))*CLKFRQ*CLKFRQ*2.0 >= (double)(t0+t1)*t0*t1*MAXACC) {
+                std::cout << "over accel: " << i << "\n";
                 killax[i] = 1;
                 if (!fault) {fault = i+8; faultclk = clk; }
             }

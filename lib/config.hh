@@ -35,7 +35,7 @@
 // Maximum position [step]
 #define MAXPOS_ (BMPXRES_*+PULPERPIX_/2)
 // Time scale, 1.0 real time; >1.0 speed up
-#define TIME_SCALE 1.0
+#define TIME_SCALE 100.0
 
 /* Scope ********************************************************************/
 #define ENABLE_SCOPE 1

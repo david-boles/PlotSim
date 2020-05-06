@@ -26,6 +26,8 @@ public:
      * You can invoke `this->setpin` to generate pulses.
      */
     void hardwareLoop();
+
+    std::tuple<double_t, double_t, bool> softwareLoop(/*int64_t clk, int64_t actualX, int64_t actualY*/);
 };
 
 } // namespace brown
