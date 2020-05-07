@@ -73,7 +73,10 @@ This section defines the timing for a major-axis
 move dependent on whatever curve is given above.
 */
 
-// Calculate the time it takes to cover a portion of a total distance when accelerating from and then back to the minimum speed
+// Prepare a plan for how long it'll take to get to each distance in a major-axis move.
+// Consumes a total move distance (pulses) and returns a function that consumes a partial
+// move distance (pules) to calculate how long after the start of the move the plotter
+// should get there (ticks).
 std::function<double_t (double_t)> PLAN_MOVE(double totalDistance_pulses) {
   // Given the length of the move (and the curve) determine what to do at which points.
   double_t accel_dist = std::min(totalDistance_pulses/2, DISTANCE_TO_FULLY_ACCELERATE);
@@ -109,13 +112,13 @@ int64_t targetX = 0; // Target position
 int64_t targetY = 0;
 int64_t absTotalDeltaX = 0; // The distances being moved
 int64_t absTotalDeltaY = 0;
-std::function<double_t (double_t)> majorXPlan = [](double_t d){return d;}; // The plan lambdas for timing out movements
+std::function<double_t (double_t)> majorXPlan = [](double_t d){return d;}; // The plan lambdas for timing out movements, one each for whichever axis is major
 std::function<double_t (double_t)> majorYPlan = [](double_t d){return d;};
 bool dirX = false; // The directions being moved
 bool dirY = false;
 bool penDown = false; // Whether the pen is down or up
 
-static void userInit(brown::Simulator& sim) {} // Startup is automatic as it it starts at its initial target (0, 0).
+static void userInit(brown::Simulator& sim) {} // Startup is automatic as the plotter starts at its initial "target" (0, 0).
 
 // Timers must have positive periods. If we want something to happen *NOW* it'll still have to wait a tick.
 static void safelySetTimerPeriod(brown::Timer &tim, uint32_t period) {
@@ -137,7 +140,6 @@ static void updateTimerX(brown::MySimulator &mysim) {
         safelySetTimerPeriod(mysim.timx, majorXPlan(absCurrDeltaX + 1) - currDeltaCLK);
     }else {// Y is major axis
         if(absTotalDeltaX != 0) { // If it has to move at all. If not, and the timer keeps running, it'll turn itself off next update.
-            // std::cout << "absTotalDeltaX: " << absTotalDeltaX << "\n"; TODO
             double_t scaleFactor = (absTotalDeltaY * 1.0) / absTotalDeltaX;
             safelySetTimerPeriod(mysim.timx, majorYPlan(scaleFactor * (absCurrDeltaX + 1)) - currDeltaCLK);
         }
@@ -160,7 +162,6 @@ static void updateTimerY(brown::MySimulator &mysim) {
     // Update timeouts till next steps
     if(absTotalDeltaX >= absTotalDeltaY) { // X is major axis
         if(absTotalDeltaY != 0) { // If it has to move at all. If not, and the timer keeps running, it'll turn itself off next update.
-            // std::cout << "absTotalDeltaY: " << absTotalDeltaY << "\n"; TODO
             double_t scaleFactor = (absTotalDeltaX * 1.0) / absTotalDeltaY;
             safelySetTimerPeriod(mysim.timy, majorXPlan(scaleFactor * (absCurrDeltaY + 1)) - currDeltaCLK);
         }
@@ -205,6 +206,7 @@ static void userLoop(brown::Simulator& sim) {
     }
 }
 
+// Queue the hardware to take a steps if it should, if done, stop the timer.
 static void timxCallback(brown::Timer& tim, brown::Simulator& sim) {
     brown::MySimulator &mysim = (brown::MySimulator&) sim;
 
