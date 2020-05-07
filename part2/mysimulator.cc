@@ -14,10 +14,10 @@ void MySimulator::hardwareLoop() {
         this->timy.callback(*this);
     }
 
-    // Output pulses if applicable
+    // Output pulses if they've been "queued up" by the software
     if(this->stepX || this->stepY) {
         setpin(clk, this->stepX, this->stepY, this->dirX, this->dirY, this->penDown);
-        this->stepX = false;
+        this->stepX = false; // "Queue"s are now empty
         this->stepY = false;
     }
 
@@ -33,7 +33,6 @@ void MySimulator::hardwareLoop() {
     }else if (this->timy.running()) {
         jump = yMaxJump;
     }
-    
     if(jump < 1) { // just a bit of safety
         jump = 1;
     }
