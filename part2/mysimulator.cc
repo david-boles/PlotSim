@@ -39,10 +39,12 @@ void MySimulator::hardwareLoop() {
         
     clk += jump;
     if(this->timx.running()) {
-        this->timXCount = (this->timXCount + jump) % this->timx.t();
+        uint32_t max = this->timx.t() > 1 ? this->timx.t() : 1; // As timers are initialized to have 0 period, this prevents dividing by 0
+        this->timXCount = (this->timXCount + jump) % max;
     }
     if(this->timy.running()) {
-        this->timYCount = (this->timYCount + jump) % this->timy.t();
+        uint32_t max = this->timy.t() > 1 ? this->timy.t() : 1;
+        this->timYCount = (this->timYCount + jump) % max;
     }
 }
 
