@@ -113,11 +113,9 @@ void MySimulator::hardwareLoop() {
   bool stepX = false, stepY = false;
   if(timerX == 0 && actualX != targetX && !startingUp) {
     stepX = true;
-    // std::cout << "took X step @ " << clk << "\n";
   }
   if(timerY == 0 && actualY != targetY && !startingUp) {
     stepY = true;
-    // std::cout << "took Y step @ " << clk << "\n";
   }
 
   // Take step
