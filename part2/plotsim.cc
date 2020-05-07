@@ -10,8 +10,8 @@
 #include "timer.hh"
 #include "mysimulator.hh"
 
-// #include "ri.hh"
-#include "ak.hh"
+#include "ri.hh"
+// #include "ak.hh"
 // #include "mi.hh"
 // #include "house_side.hh"
 // #include "elev.hh"
@@ -32,7 +32,7 @@
 #define MIN_PULSES_PER_SECOND 1000.0
 #define MAX_PULSES_PER_SECOND 10000.0
 #define ACCELERATION_TIME_SECS 0.150
-#define SAFETY_FACTOR 0.03
+#define SAFETY_FACTOR 0.035 // For max speed on RI, use ~0.02835 (101.22sec)
 
 double_t PULSES_PER_CM = (PULSES_PER_REV / CM_PER_REV);
 double_t MIN_PULSES_PER_TICK = (1 - SAFETY_FACTOR) * (MIN_PULSES_PER_SECOND / CLOCK_FREQ_HZ);
