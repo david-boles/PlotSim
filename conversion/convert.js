@@ -2,9 +2,10 @@ const util = require('util')
 const fs = require('fs')
 const Helper = require('dxf').Helper
 
-const maxPlotMin = [-2500, -2500]
-const maxPlotMax = [2500, 2500]
+const maxPlotMin = [-3000, -3000]
+const maxPlotMax = [3000, 1500]
 const maxPlotSize = [maxPlotMax[0] - maxPlotMin[0], maxPlotMax[1] - maxPlotMin[1]]
+const plotCenter = [maxPlotMin[0] + (maxPlotSize[0]/2), maxPlotMin[1] + (maxPlotSize[1]/2)]
 
 const text = fs.readFileSync(process.argv[2], "utf8")
 const helper = new Helper(text)
@@ -17,9 +18,8 @@ const dxfSize = [dxfMax[0] - dxfMin[0], dxfMax[1] - dxfMin[1]]
 const reducePlotWidth = (maxPlotSize[0]/maxPlotSize[1]) > (dxfSize[0]/dxfSize[1])
 const ratioFactor = reducePlotWidth? dxfSize[0]/dxfSize[1]: dxfSize[1]/dxfSize[0];
 
-const plotMin = [reducePlotWidth? ratioFactor * maxPlotMin[1] : maxPlotMin[0], reducePlotWidth? maxPlotMin[1] : ratioFactor * maxPlotMin[0]]
-const plotMax = [reducePlotWidth? ratioFactor * maxPlotMax[1] : maxPlotMax[0], reducePlotWidth? maxPlotMax[1] : ratioFactor * maxPlotMax[0]]
-const plotSize = [plotMax[0] - plotMin[0], plotMax[1] - plotMin[1]]
+const plotSize = [reducePlotWidth? ratioFactor * maxPlotSize[1] : maxPlotSize[0], reducePlotWidth? maxPlotSize[1] : ratioFactor * maxPlotSize[0]]
+const plotMin = [plotCenter[0] - (plotSize[0]/2), plotCenter[1] - (plotSize[1]/2)]
 
 const scaleFactor = [plotSize[0] / dxfSize[0], plotSize[1] / dxfSize[1]]
 
